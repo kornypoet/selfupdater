@@ -1,8 +1,11 @@
-module github.com/kornypoet/vexcalibur
+module github.com/kornypoet/selfupdater
 
 go 1.24.2
 
-require github.com/gin-gonic/gin v1.10.0
+require (
+	github.com/gin-gonic/gin v1.10.0
+	golang.org/x/mod v0.8.0
+)
 
 require (
 	github.com/bytedance/sonic v1.11.6 // indirect
