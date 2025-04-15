@@ -69,7 +69,7 @@ func Download(c *gin.Context) {
 	}
 
 	c.Header("Content-Description", "File Transfer")
-	c.Header("Content-Disposition", "attachment; filename=" + filename)
+	c.Header("Content-Disposition", "attachment; filename="+filename)
 	c.Header("Content-Type", "application/octet-stream")
 	c.Header("Content-Length", string(stat.Size()))
 	c.File(filePath)

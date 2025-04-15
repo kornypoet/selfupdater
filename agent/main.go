@@ -2,56 +2,29 @@ package main
 
 import (
 	_ "embed"
-	"encoding/json"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"time"
+	"os"
 
-	"golang.org/x/mod/semver"
+	"go.uber.org/zap"
 )
 
 //go:embed VERSION
 var version string
 
-type ApiResponse struct {
-	Latest string `json:"latest"`
-}
+const agentEnv = "AGENT_PROC"
 
+// Setup logging and start supervisor
+// Start agent instead if env var is set
 func main() {
-	for {
-		log.Printf("Running version: %s\n", version)
-		time.Sleep(1 * time.Second) // perform "work"
-		log.Printf("Update available? %v", updateAvailable())
-	}
-}
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
 
-func updateAvailable() bool {
-	url := "http://localhost:8080/latest"
+	sugar := logger.Sugar()
+	agentLogger := sugar.With(zap.String("process", "agent"))
+	supervisorLogger := sugar.With(zap.String("process", "supervisor"))
 
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Fatalf("Failed to make GET request: %v", err)
+	if os.Getenv(agentEnv) == "1" {
+		agent(agentLogger)
+	} else {
+		supervisor(supervisorLogger)
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Unexpected status code: %d", resp.StatusCode)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalf("Failed to read response body: %v", err)
-	}
-
-	var data ApiResponse
-	if err := json.Unmarshal(body, &data); err != nil {
-		log.Fatalf("Failed to unmarshal JSON: %v", err)
-	}
-
-	log.Printf("Response:\n%+v\n", data)
-	if semver.Compare(version, data.Latest) == -1 {
-		return true
-	}
-	return false
 }
